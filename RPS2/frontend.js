@@ -89,13 +89,13 @@ elements.nextBtn.addEventListener('click', () => {
         elements.finalScore.textContent = `${state.score} / ${state.total}`;
         let message = '';
         if (state.score <= 3)
-            message = "Damn. You're really fucking bad at this.";
+            message = "Damn. You're really bad at this.";
         else if (state.score <= 7)
             message = "I guess you did ok.";
         else if (state.score <= 9)
             message = "Not bad, but probably mostly luck.";
         else
-            message = "Cheater. How many times did you redo your answers?!";
+            message = "Cheater! How many times did you resubmit your answers?!";
         elements.endMessage.textContent = message;
         showScreen('end');
     }
@@ -106,3 +106,4 @@ elements.tryAgainBtn.addEventListener('click', () => {
 });
 // Initialen Screen anzeigen
 showScreen('start');
+//# sourceMappingURL=frontend.js.map
