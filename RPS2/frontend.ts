@@ -98,7 +98,7 @@ elements.nextBtn.addEventListener('click', () => {
         // Spiel ist zu Ende
         elements.finalScore.textContent = `${state.score} / ${state.total}`;
         let message = '';
-        if (state.score <= 3) message = "Damn. You're really fucking bad at this.";
+        if (state.score <= 3) message = "Damn. You're reallyfix bad at this.";
         else if (state.score <= 7) message = "I guess you did ok.";
         else if (state.score <= 9) message = "Not bad, but probably mostly luck.";
         else message = "Only a true loser would memorize every single answer.";
