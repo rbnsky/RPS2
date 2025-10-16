@@ -37,7 +37,7 @@ h2 {
 
 p {
     font-size: 1.2rem;
-    color: #b3b3b3;
+    color: #ffffff;
 }
 
 button {
@@ -65,7 +65,13 @@ button:hover {
 #score-display,
 #answer-score-display {
     font-size: 1.5rem;
-    color: #b3b3b3;
+    color: #ffffff;
     position: absolute;
     top: 2rem;
+
+    
+}
+
+#answer-message {
+    white-space: pre-wrap;
 }
