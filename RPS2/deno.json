@@ -1,8 +1,0 @@
-{
-    "tasks": {
-        "start": "deno run --allow-net --allow-read server.ts"
-    },
-    "imports": {
-        "std/": "https://deno.land/std@0.194.0/"
-    }
-}
