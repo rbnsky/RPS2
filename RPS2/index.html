@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock, Paper, Scissors 2</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen" class="screen">
+            <h1>rock, paper, scissors 2</h1>
+            <p>the thrilling sequel everyone asked for</p>
+            <p>by rbnsky</p>
+            <button id="start-btn">start</button>
+        </div>
+
+        <div id="question-screen" class="screen hidden">
+            <div id="score-display">0 / 0 / 10</div>
+            <h2 id="item-name"></h2>
+            <div class="choices">
+                <button class="choice-btn" data-choice="rock">rock</button>
+                <button class="choice-btn" data-choice="paper">paper</button>
+                <button class="choice-btn" data-choice="scissors">scissors</button>
+            </div>
+        </div>
+
+        <div id="answer-screen" class="screen hidden">
+            <div id="answer-score-display">0 / 0 / 10</div>
+            <h2 id="answer-result"></h2>
+            <p id="answer-message"></p>
+            <button id="next-btn">next</button>
+        </div>
+
+        <div id="end-screen" class="screen hidden">
+            <h2>Final Score</h2>
+            <h1 id="final-score">0 / 10</h1>
+            <p id="end-message"></p>
+            <button id="try-again-btn">try again</button>
+        </div>
+
+    </div>
+
+    <script src="frontend.js"></script>
+</body>
+
+</html>
