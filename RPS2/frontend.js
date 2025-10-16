@@ -89,13 +89,13 @@ elements.nextBtn.addEventListener('click', () => {
         elements.finalScore.textContent = `${state.score} / ${state.total}`;
         let message = '';
         if (state.score <= 3)
-            message = "Damn. You're really bad at this.";
+            message = "Damn. You're reallyfix bad at this.";
         else if (state.score <= 7)
             message = "I guess you did ok.";
         else if (state.score <= 9)
             message = "Not bad, but probably mostly luck.";
         else
-            message = "Cheater! How many times did you resubmit your answers?!";
+            message = "Only a true loser would memorize every single answer.";
         elements.endMessage.textContent = message;
         showScreen('end');
     }
