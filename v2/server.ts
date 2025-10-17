@@ -1,45 +1,43 @@
 // server.ts 
+// Importiert notwendige Deno-Module für den Webserver.
 import { serve } from "https://deno.land/std@0.194.0/http/server.ts";
 import { serveDir } from "https://deno.land/std@0.194.0/http/file_server.ts";
+// Importiert die Datenbank-Funktionen aus unserer neuen Datei.
+import { setupDatabase, loadGameItems, GameItem } from "./database.ts";
 
-// typescript interfaces
+// --- TypeScript Interfaces ---
+// Diese Interfaces definieren die "Form" unserer Datenobjekte.
+// Das hilft, Fehler zu vermeiden und den Code lesbarer zu machen.
+
+// Definiert die Struktur für eine einzelne Antwortmöglichkeit (z.B. "rock").
 interface Choice {
     correct: boolean;
     message: string;
 }
 
-interface GameItem {
-    id: string;
-    name: string;
-    choices: {
-        [key: string]: Choice;
-    };
-}
-
+// Definiert die Struktur für eine laufende Spielsitzung eines Benutzers.
 interface GameSession {
-    items: GameItem[];
-    currentIndex: number;
-    score: number;
-    answered: number;
-    total: number;
+    items: GameItem[];      // Eine Liste der zufällig angeordneten Spiel-Items für diese Runde.
+    currentIndex: number;   // Der Index des aktuellen Items in der Liste.
+    score: number;          // Die aktuelle Punktzahl des Spielers.
+    answered: number;       // Die Anzahl der bereits beantworteten Fragen.
+    total: number;          // Die Gesamtzahl der Fragen in dieser Runde.
 }
 
-// game content
-const gameItems: GameItem[] = [
-    { id: 'computer', name: 'gaming computer', choices: { rock: { correct: false, message:"You throw the rock at the computer.\nIt has a little dent, but nothing else happens."}, paper: { correct: true, message:"You place the sheet of paper in front of the computer's fans.\nIt goes up into flames shortly afterwards."}, scissors: { correct: false, message:"You try to cut the power supply's cable.\nYou suffer an electric shock and collapse."} } },
-    { id: 'water', name: 'glass of water', choices: { rock: { correct: false, message:"You throw the rock into the glass of water.\nYour pants get wet."}, paper: { correct: true, message:"You fold the paper into a boat and place it on the water.\nThe seas are yours, captain."}, scissors: { correct: false, message:"You try cutting the water.\nSuprisingly, this doesnt work."} } },
-    { id: 'matej', name: 'matej', choices: { rock: { correct: true, message:"You throw a rock at Matej's head.\nHe collapses on the floor, unable to play a card.\nYou win the Magic the Gathering tournament."}, paper: { correct: false, message:"You play an empty sheet of paper.\nThat is not a valid Magic the Gathering Card.\nYou lose the tournament."}, scissors: { correct: false, message:"You cut Matej's commander in half.\nThis is against official Magic the Gathering rules.\nYour punishment is certain death."} } },
-    { id: 'vampire', name: 'a vampire', choices: { rock: { correct: false, message:"You throw the rock at the vampire.\nIn retaliation, the vampire bites open your carotid artery."}, paper: { correct: false, message:"You hand the vampire a sheet of paper.\nHe makes a cool origami bat.\nThen, he sucks the blood from your body until it is dry."}, scissors: { correct: true, message: "You open the scissors, forming a crucifix.\nThe vampire crumbles into dust." } } },
-    { id: 'tourist', name: 'angry french tourist', choices: { rock: { correct: false, message:"You throw the rock at the tourist.\nThey start yelling words at you you don't understand."}, paper: { correct: true, message:"You wave the white sheet of paper like a flag.\nThe french tourist recognizes this gesture and leaves you be."}, scissors: { correct: false, message: "You try cutting their baguette in half.\nIt is only decorative, 7 months old and hard as rocks.\nYour scissors break."} } },
-    { id: 'nokia', name: 'old nokia phone', choices: { rock: { correct: false, message:"You strike the Nokia with a rock.\nThe rock shatters."}, paper: { correct: true, message:"You wrap the nokia in paper, hiding it.\nIt becomes forgotten for eternity." }, scissors: { correct: false, message:"You try cutting the Nokia.\nYou lose all your fingers, but the nokia is unharmed."} } },
-    { id: 'dragon', name: 'ender dragon', choices: { rock: { correct: false, message:"You place a cobblestone.\nThe Ender Dragon knocks you into the void."}, paper: { correct: false, message:"You hit the Ender Dragon with the piece of paper.\nIt does 1 HP Damage.\nThe Ender Dragon has 199 HP left."}, scissors: { correct: true, message: "You shear sheep to craft some beds.\nUsing the bed speedrun strategy, you defeat the ender dragon in world record pace."} } },
-    { id: 'adhd', name: 'adhd', choices: { rock: { correct: true, message:"You pull out a rock from your pocket.\nPetting it calms you."}, paper: { correct: false, message:"You stare at a blank piece of paper.\nYour ADHD gets infinitely worse." }, scissors: { correct: false, message:"Out of boredom, you cut off one of your fingers.\nYou are certainly not bored anymore."} } },
-    { id: 'router', name: 'offline internet router', choices: { rock: { correct: false, message:"You smash the router with a router.\nIt still doesn't work."}, paper: { correct: false, message:"You write a physical support ticket and send it to your provider via mail.\nThey never answer."}, scissors: { correct: true, message: "You use the tipp of the scissors to press the tiny, recessed restart button on your router.\nShortly after, the internet is back."} } },
-    { id: 'date', name: 'first date', choices: { rock: { correct: true, message:"You place a rock on the table and start talking to it instead.\nIt makes for better conversation."}, paper: { correct: false, message:"You use the paper as a napkin and hang it over your torso to not get it dirty.\nYou look like a baby."}, scissors: { correct: false, message:"You pull out the scissors and start chasing your date like a slasher movie villain.\nYou are admitted to a psychiatric clinic the same day."} } },
-];
 
+// --- Datenbank-Initialisierung ---
+// Richtet die SQLite-Datenbank ein und lädt die Spieldaten beim Serverstart.
+const db = setupDatabase();
+const gameItems = loadGameItems(db);
+
+
+// --- Spiel-Logik ---
+
+// Speichert alle aktiven Spielsitzungen. Die Map verwendet eine Session-ID als Schlüssel.
 const gameSessions = new Map<string, GameSession>();
 
+// Eine Hilfsfunktion, um die Elemente eines Arrays zufällig zu mischen.
+// Dies sorgt dafür, dass die Reihenfolge der Fragen in jeder Spielrunde anders ist.
 function shuffle<T>(array: T[]): T[] {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -49,25 +47,32 @@ function shuffle<T>(array: T[]): T[] {
     return newArray;
 }
 
+
+// --- Server-Hauptfunktion ---
+// Diese Funktion wird für jede ankommende Anfrage an den Server ausgeführt.
 serve(async (req) => {
     const url = new URL(req.url);
     const path = url.pathname;
 
-    // Add CORS headers to all responses
+    // CORS-Header, um Anfragen von anderen Domains zu erlauben (wichtig für die lokale Entwicklung).
     const corsHeaders = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type"
     };
 
-    // Handle CORS preflight
+    // Behandelt CORS Preflight-Anfragen, die der Browser vor dem eigentlichen POST sendet.
     if (req.method === "OPTIONS") {
         return new Response(null, { headers: corsHeaders });
     }
 
+    // --- API-Routen ---
+
+    // Route: /api/start-game
+    // Startet eine neue Spielsitzung.
     if (path === "/api/start-game") {
-        const sessionId = crypto.randomUUID();
-        const shuffledItems = shuffle([...gameItems]);
+        const sessionId = crypto.randomUUID(); // Erzeugt eine einzigartige ID für die Session.
+        const shuffledItems = shuffle([...gameItems]); // Mischt die Fragen für diese Runde.
         const session: GameSession = {
             items: shuffledItems,
             currentIndex: 0,
@@ -75,8 +80,9 @@ serve(async (req) => {
             answered: 0,
             total: shuffledItems.length
         };
-        gameSessions.set(sessionId, session);
+        gameSessions.set(sessionId, session); // Speichert die neue Session.
 
+        // Sendet die Session-ID und die erste Frage an das Frontend.
         return new Response(JSON.stringify({
             sessionId,
             item: { id: session.items[0].id, name: session.items[0].name },
@@ -91,33 +97,37 @@ serve(async (req) => {
         });
     }
 
+    // Route: /api/submit-answer
+    // Verarbeitet die Antwort eines Spielers auf eine Frage.
     if (path === "/api/submit-answer" && req.method === "POST") {
         try {
-            const data = await req.json();
+            const data = await req.json(); // Liest die JSON-Daten aus der Anfrage (sessionId, itemId, choice).
             const session = gameSessions.get(data.sessionId);
 
+            // Fehlerbehandlung, falls die Session nicht gefunden wird.
             if (!session) {
                 return new Response(JSON.stringify({ error: "Session not found" }), {
                     status: 404,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type": "application/json"
-                    }
+                    headers: { ...corsHeaders, "Content-Type": "application/json" }
                 });
             }
 
+            // Holt das aktuelle Item und die vom Spieler gewählte Antwort.
             const currentItem = session.items[session.currentIndex];
             const choice = currentItem.choices[data.choice];
             const correct = choice.correct;
 
+            // Aktualisiert den Spielstand.
             session.score += correct ? 1 : 0;
             session.answered += 1;
             session.currentIndex += 1;
 
+            // Ermittelt das nächste Item oder null, wenn das Spiel vorbei ist.
             const nextItem = session.currentIndex < session.items.length
                 ? session.items[session.currentIndex]
                 : null;
 
+            // Sendet das Ergebnis und das nächste Item an das Frontend.
             return new Response(JSON.stringify({
                 correct,
                 message: choice.message,
@@ -125,23 +135,19 @@ serve(async (req) => {
                 answered: session.answered,
                 nextItem: nextItem ? { id: nextItem.id, name: nextItem.name } : null
             }), {
-                headers: {
-                    ...corsHeaders,
-                    "Content-Type": "application/json"
-                }
+                headers: { ...corsHeaders, "Content-Type": "application/json" }
             });
         } catch (error) {
+            // Fehlerbehandlung für ungültige Anfragen.
             return new Response(JSON.stringify({ error: "Invalid request" }), {
                 status: 400,
-                headers: {
-                    ...corsHeaders,
-                    "Content-Type": "application/json"
-                }
+                headers: { ...corsHeaders, "Content-Type": "application/json" }
             });
         }
     }
 
-    // Serve static files from current directory
+    // --- Statischer Datei-Server ---
+    // Wenn keine API-Route passt, wird versucht, eine statische Datei auszuliefern (index.html, style.css, etc.).
     return serveDir(req, {
         fsRoot: ".",
         urlRoot: "",
