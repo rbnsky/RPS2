@@ -23,7 +23,7 @@
     "moduleResolution": "node"
   },
   "include": [
-    "script.ts"
+    "frontend.ts"
   ],
   "exclude": [
     "server.ts",
