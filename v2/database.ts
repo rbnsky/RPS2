@@ -38,18 +38,17 @@ export function setupDatabase(): Database {
             FOREIGN KEY (item_id) REFERENCES items (item_id)
         )
     `).run();
-
-    const rows = [...database.prepare("SELECT COUNT(*) FROM items").all()];
-    const itemCount = rows.length > 0 ? rows[0][0] : 0;
+    const itemCount = database.prepare("SELECT COUNT(*) FROM items").get();
+    //const itemCount = rows.length > 1 ? rows.length : 0;
+    console.log(JSON.stringify(itemCount))
     if (itemCount === 0) {
     seedDatabase(database);
     }
-
     return database;
 }
 
 // Füllt die Datenbank mit den ursprünglichen Spieldaten
-function seedDatabase(database: database) {
+function seedDatabase(database: Database) {
     const initialItems = [
         { id: 'computer', name: 'gaming computer', choices: { rock: { correct: false, message: "You throw the rock at the computer.\nIt has a little dent, but nothing else happens." }, paper: { correct: true, message: "You place the sheet of paper in front of the computer's fans.\nIt goes up into flames shortly afterwards." }, scissors: { correct: false, message: "You try to cut the power supply's cable.\nYou suffer an electric shock and collapse." } } },
         { id: 'water', name: 'glass of water', choices: { rock: { correct: false, message: "You throw the rock into the glass of water.\nYour pants get wet." }, paper: { correct: true, message: "You fold the paper into a boat and place it on the water.\nThe seas are yours, captain." }, scissors: { correct: false, message: "You try cutting the water.\nSuprisingly, this doesnt work." } } },
@@ -76,19 +75,19 @@ function seedDatabase(database: database) {
 }
 
 // Lädt alle Spiel-Items und ihre zugehörigen Antwortmöglichkeiten aus der Datenbank
-export function loadGameItems(database: database): GameItem[] {
+export function loadGameItems(database: Database): GameItem[] {
     const items: { [id: string]: GameItem } = {};
 
     // Lädt zuerst alle Items
     const itemRows = database.prepare("SELECT item_id, name FROM items").all();
     console.log(itemRows);
-    for (const [id, name] of itemRows) {
+    for (const {id, name} of itemRows) {
         items[id] = { id, name, choices: {} };
     }
 
     // Lädt dann alle Choices und fügt sie den entsprechenden Items hinzu
     const choiceRows = database.prepare("SELECT item_id, choice_name, correct, message FROM choices").all();
-    for (const [itemId, choiceName, correct, message] of choiceRows) {
+    for (const {itemId, choiceName, correct, message} of choiceRows) {
         if (items[itemId]) {
             items[itemId].choices[choiceName] = {
                 correct: correct === 1,
