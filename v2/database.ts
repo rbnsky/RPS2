@@ -1,4 +1,4 @@
-import { DB } from "https://deno.land/x/sqlite@v3.7.0/mod.ts";
+import { Database } from "jsr:@db/sqlite";
 
 // Definiert die Struktur eines GameItems, wie es aus der Datenbank kommt
 export interface GameItem {
@@ -13,22 +13,22 @@ export interface GameItem {
 }
 
 // Initialisiert die Datenbank und lädt die Spieldaten
-export function setupDatabase(): DB {
-    const db = new DB("game.db");
+export function setupDatabase(): Database {
+    const database = new Database("game.db");
 
-    // Erstellt die Tabellen, falls sie noch nicht existieren.
-    // 'items' speichert die Hauptobjekte des Spiels.
-    db.execute(`
+    // Erstellt die Tabellen
+    // Items speichert die Hauptobjekte des Spiels.
+    database.prepare(`
         CREATE TABLE IF NOT EXISTS items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             item_id TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL
         )
-    `);
+    `).run();
 
-    // 'choices' speichert die Antwortmöglichkeiten für jedes Item.
+    // Choices speichert die Antwortmöglichkeiten für jedes Item.
     // 'item_id' ist ein Fremdschlüssel, der auf die 'items'-Tabelle verweist.
-    db.execute(`
+    database.prepare(`
         CREATE TABLE IF NOT EXISTS choices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             item_id TEXT NOT NULL,
@@ -37,20 +37,19 @@ export function setupDatabase(): DB {
             message TEXT NOT NULL,
             FOREIGN KEY (item_id) REFERENCES items (item_id)
         )
-    `);
+    `).run();
 
-    // Überprüft, ob die Datenbank bereits gefüllt ist
-    const [itemCount] = db.query<[number]>("SELECT COUNT(*) FROM items");
-    if (itemCount && itemCount[0] === 0) {
-        // Wenn die Datenbank leer ist, fügen wir die initialen Spieldaten hinzu.
-        seedDatabase(db);
+    const rows = [...database.prepare("SELECT COUNT(*) FROM items").all()];
+    const itemCount = rows.length > 0 ? rows[0][0] : 0;
+    if (itemCount === 0) {
+    seedDatabase(database);
     }
 
-    return db;
+    return database;
 }
 
 // Füllt die Datenbank mit den ursprünglichen Spieldaten
-function seedDatabase(db: DB) {
+function seedDatabase(database: database) {
     const initialItems = [
         { id: 'computer', name: 'gaming computer', choices: { rock: { correct: false, message: "You throw the rock at the computer.\nIt has a little dent, but nothing else happens." }, paper: { correct: true, message: "You place the sheet of paper in front of the computer's fans.\nIt goes up into flames shortly afterwards." }, scissors: { correct: false, message: "You try to cut the power supply's cable.\nYou suffer an electric shock and collapse." } } },
         { id: 'water', name: 'glass of water', choices: { rock: { correct: false, message: "You throw the rock into the glass of water.\nYour pants get wet." }, paper: { correct: true, message: "You fold the paper into a boat and place it on the water.\nThe seas are yours, captain." }, scissors: { correct: false, message: "You try cutting the water.\nSuprisingly, this doesnt work." } } },
@@ -66,30 +65,29 @@ function seedDatabase(db: DB) {
 
     console.log("Seeding database...");
     for (const item of initialItems) {
-        db.query("INSERT INTO items (item_id, name) VALUES (?, ?)", [item.id, item.name]);
+        database.prepare("INSERT INTO items (item_id, name) VALUES (?, ?)").run(item.id, item.name);
         for (const choiceName in item.choices) {
             const choice = item.choices[choiceName];
-            db.query(
-                "INSERT INTO choices (item_id, choice_name, correct, message) VALUES (?, ?, ?, ?)",
-                [item.id, choiceName, choice.correct ? 1 : 0, choice.message]
-            );
+            database.prepare(
+                "INSERT INTO choices (item_id, choice_name, correct, message) VALUES (?, ?, ?, ?)").run(item.id, choiceName, choice.correct ? 1 : 0, choice.message);
         }
     }
     console.log("Database seeded successfully.");
 }
 
 // Lädt alle Spiel-Items und ihre zugehörigen Antwortmöglichkeiten aus der Datenbank
-export function loadGameItems(db: DB): GameItem[] {
+export function loadGameItems(database: database): GameItem[] {
     const items: { [id: string]: GameItem } = {};
 
     // Lädt zuerst alle Items
-    const itemRows = db.query<[string, string]>("SELECT item_id, name FROM items");
+    const itemRows = database.prepare("SELECT item_id, name FROM items").all();
+    console.log(itemRows);
     for (const [id, name] of itemRows) {
         items[id] = { id, name, choices: {} };
     }
 
     // Lädt dann alle Choices und fügt sie den entsprechenden Items hinzu
-    const choiceRows = db.query<[string, string, number, string]>("SELECT item_id, choice_name, correct, message FROM choices");
+    const choiceRows = database.prepare("SELECT item_id, choice_name, correct, message FROM choices").all();
     for (const [itemId, choiceName, correct, message] of choiceRows) {
         if (items[itemId]) {
             items[itemId].choices[choiceName] = {

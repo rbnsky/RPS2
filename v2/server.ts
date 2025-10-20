@@ -1,15 +1,12 @@
-// server.ts 
 // Importiert notwendige Deno-Module für den Webserver.
 import { serve } from "https://deno.land/std@0.194.0/http/server.ts";
 import { serveDir } from "https://deno.land/std@0.194.0/http/file_server.ts";
-// Importiert die Datenbank-Funktionen aus unserer neuen Datei.
+// Importiert database.ts
 import { setupDatabase, loadGameItems, GameItem } from "./database.ts";
 
-// --- TypeScript Interfaces ---
-// Diese Interfaces definieren die "Form" unserer Datenobjekte.
-// Das hilft, Fehler zu vermeiden und den Code lesbarer zu machen.
+// Typescript Interfaces (definieren Form der Datenobjekte)
 
-// Definiert die Struktur für eine einzelne Antwortmöglichkeit (z.B. "rock").
+// Struktur der Antwortmöglichkeiten
 interface Choice {
     correct: boolean;
     message: string;
@@ -17,22 +14,19 @@ interface Choice {
 
 // Definiert die Struktur für eine laufende Spielsitzung eines Benutzers.
 interface GameSession {
-    items: GameItem[];      // Eine Liste der zufällig angeordneten Spiel-Items für diese Runde.
-    currentIndex: number;   // Der Index des aktuellen Items in der Liste.
-    score: number;          // Die aktuelle Punktzahl des Spielers.
-    answered: number;       // Die Anzahl der bereits beantworteten Fragen.
-    total: number;          // Die Gesamtzahl der Fragen in dieser Runde.
+    items: GameItem[];      // Liste der Items (zufällige Reihenfolge)
+    currentIndex: number;   // Index des aktuellen Items in der Liste
+    score: number;          // Aktuelle Punktzahl des Spielers
+    answered: number;       // Anzahl bereits beantworteter Fragen
+    total: number;          // Gesamtzahl der Fragen
 }
 
-
-// --- Datenbank-Initialisierung ---
-// Richtet die SQLite-Datenbank ein und lädt die Spieldaten beim Serverstart.
+// Richtet die SQLite-Datenbank ein und lädt die Spieldaten beim Serverstart
 const db = setupDatabase();
 const gameItems = loadGameItems(db);
 
 
-// --- Spiel-Logik ---
-
+// Spiel-Logik 
 // Speichert alle aktiven Spielsitzungen. Die Map verwendet eine Session-ID als Schlüssel.
 const gameSessions = new Map<string, GameSession>();
 
@@ -47,8 +41,7 @@ function shuffle<T>(array: T[]): T[] {
     return newArray;
 }
 
-
-// --- Server-Hauptfunktion ---
+// Server-Hauptfunktion
 // Diese Funktion wird für jede ankommende Anfrage an den Server ausgeführt.
 serve(async (req) => {
     const url = new URL(req.url);
@@ -66,8 +59,7 @@ serve(async (req) => {
         return new Response(null, { headers: corsHeaders });
     }
 
-    // --- API-Routen ---
-
+    // API-Routen
     // Route: /api/start-game
     // Startet eine neue Spielsitzung.
     if (path === "/api/start-game") {
@@ -82,7 +74,7 @@ serve(async (req) => {
         };
         gameSessions.set(sessionId, session); // Speichert die neue Session.
 
-        // Sendet die Session-ID und die erste Frage an das Frontend.
+        // Sendet die Session-ID und die erste Frage an das Frontend
         return new Response(JSON.stringify({
             sessionId,
             item: { id: session.items[0].id, name: session.items[0].name },
@@ -98,13 +90,13 @@ serve(async (req) => {
     }
 
     // Route: /api/submit-answer
-    // Verarbeitet die Antwort eines Spielers auf eine Frage.
+    // Verarbeitet die Antwort eines Spielers auf eine Frage
     if (path === "/api/submit-answer" && req.method === "POST") {
         try {
-            const data = await req.json(); // Liest die JSON-Daten aus der Anfrage (sessionId, itemId, choice).
+            const data = await req.json(); // Liest die JSON-Daten aus der Anfrage (sessionId, itemId, choice)
             const session = gameSessions.get(data.sessionId);
 
-            // Fehlerbehandlung, falls die Session nicht gefunden wird.
+            // Fehlerbehandlung, falls die Session nicht gefunden wird
             if (!session) {
                 return new Response(JSON.stringify({ error: "Session not found" }), {
                     status: 404,
@@ -112,22 +104,22 @@ serve(async (req) => {
                 });
             }
 
-            // Holt das aktuelle Item und die vom Spieler gewählte Antwort.
+            // Holt das aktuelle Item und die vom Spieler gewählte Antwort
             const currentItem = session.items[session.currentIndex];
             const choice = currentItem.choices[data.choice];
             const correct = choice.correct;
 
-            // Aktualisiert den Spielstand.
+            // Aktualisiert den Spielstand
             session.score += correct ? 1 : 0;
             session.answered += 1;
             session.currentIndex += 1;
 
-            // Ermittelt das nächste Item oder null, wenn das Spiel vorbei ist.
+            // Ermittelt das nächste Item oder null, wenn das Spiel vorbei ist
             const nextItem = session.currentIndex < session.items.length
                 ? session.items[session.currentIndex]
                 : null;
 
-            // Sendet das Ergebnis und das nächste Item an das Frontend.
+            // Sendet das Ergebnis und das nächste Item an Frontend
             return new Response(JSON.stringify({
                 correct,
                 message: choice.message,
@@ -138,7 +130,7 @@ serve(async (req) => {
                 headers: { ...corsHeaders, "Content-Type": "application/json" }
             });
         } catch (error) {
-            // Fehlerbehandlung für ungültige Anfragen.
+            // Fehlerbehandlung für ungültige Anfrage
             return new Response(JSON.stringify({ error: "Invalid request" }), {
                 status: 400,
                 headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -146,8 +138,8 @@ serve(async (req) => {
         }
     }
 
-    // --- Statischer Datei-Server ---
-    // Wenn keine API-Route passt, wird versucht, eine statische Datei auszuliefern (index.html, style.css, etc.).
+    // Statischer Datei-Server
+    // Wenn keine API-Route passt, wird versucht, eine statische Datei auszuliefern
     return serveDir(req, {
         fsRoot: ".",
         urlRoot: "",

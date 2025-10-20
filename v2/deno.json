@@ -1,9 +1,5 @@
 {
     "tasks": {
-        "start": "deno run --allow-net --allow-read --allow-write --allow-ffi --unstable-ffi server.ts"
-    },
-    "imports": {
-        "std/": "https://deno.land/std@0.194.0/",
-        "sqlite": "https://deno.land/x/sqlite@v3.8/mod.ts"
+        "start": "deno run -A server.ts"
     }
 }
