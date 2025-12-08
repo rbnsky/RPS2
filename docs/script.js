@@ -1,10 +1,10 @@
 "use strict";
 
-// --- Spieldaten (ehemals server.ts) ---
+// Spieldaten
 const gameItems = [
     { id: 'computer', name: 'gaming computer', choices: { rock: { correct: false, message: "You throw the rock at the computer.\nIt has a little dent, but nothing else happens." }, paper: { correct: true, message: "You place the sheet of paper in front of the computer's fans.\nIt goes up into flames shortly afterwards." }, scissors: { correct: false, message: "You try to cut the power supply's cable.\nYou suffer an electric shock and collapse." } } },
     { id: 'water', name: 'glass of water', choices: { rock: { correct: false, message: "You throw the rock into the glass of water.\nYour pants get wet." }, paper: { correct: true, message: "You fold the paper into a boat and place it on the water.\nThe seas are yours, captain." }, scissors: { correct: false, message: "You try cutting the water.\nSuprisingly, this doesnt work." } } },
-    { id: 'matej', name: 'matej', choices: { rock: { correct: true, message: "You throw a rock at Matej's head.\nHe collapses on the floor, unable to play a card.\nYou win the Magic the Gathering tournament." }, paper: { correct: false, message: "You play an empty sheet of paper.\nThat is not a valid Magic the Gathering Card.\nYou lose the tournament." }, scissors: { correct: false, message: "You cut Matej's commander in half.\nThis is against official Magic the Gathering rules.\nYour punishment is certain death." } } },
+    { id: 'matej', name: 'magic the gathering player', choices: { rock: { correct: true, message: "You throw a rock at the player's head.\nThey collapse on the floor, unable to play a card.\nYou win the Magic the Gathering tournament." }, paper: { correct: false, message: "You play an empty sheet of paper.\nThat is not a valid Magic the Gathering Card.\nYou lose the tournament." }, scissors: { correct: false, message: "You cut their commander card in half.\nThis is against official Magic the Gathering rules.\nYour punishment is certain death." } } },
     { id: 'vampire', name: 'a vampire', choices: { rock: { correct: false, message: "You throw the rock at the vampire.\nIn retaliation, the vampire bites open your carotid artery." }, paper: { correct: false, message: "You hand the vampire a sheet of paper.\nHe makes a cool origami bat.\nThen, he sucks the blood from your body until it is dry." }, scissors: { correct: true, message: "You open the scissors, forming a crucifix.\nThe vampire crumbles into dust." } } },
     { id: 'tourist', name: 'angry french tourist', choices: { rock: { correct: false, message: "You throw the rock at the tourist.\nThey start yelling words at you you don't understand." }, paper: { correct: true, message: "You wave the white sheet of paper like a flag.\nThe french tourist recognizes this gesture and leaves you be." }, scissors: { correct: false, message: "You try cutting their baguette in half.\nIt is only decorative, 7 months old and hard as rocks.\nYour scissors break." } } },
     { id: 'nokia', name: 'old nokia phone', choices: { rock: { correct: false, message: "You strike the Nokia with a rock.\nThe rock shatters." }, paper: { correct: true, message: "You wrap the nokia in paper, hiding it.\nIt becomes forgotten for eternity." }, scissors: { correct: false, message: "You try cutting the Nokia phone.\nYou lose all your fingers, but the phone is unharmed." } } },
@@ -14,7 +14,7 @@ const gameItems = [
     { id: 'date', name: 'first date', choices: { rock: { correct: true, message: "You place a rock on the table and start talking to it instead.\nIt makes for better conversation." }, paper: { correct: false, message: "You use the paper as a napkin and hang it over your torso to not get it dirty.\nYou look like a baby." }, scissors: { correct: false, message: "You pull out the scissors and start chasing your date like a slasher movie villain.\nYou are admitted to a psychiatric clinic the same day." } } },
 ];
 
-// --- Shuffle-Funktion (ehemals server.ts) ---
+// Shuffle-Funktion
 function shuffle(array) {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -24,7 +24,7 @@ function shuffle(array) {
     return newArray;
 }
 
-// --- Frontend-Logik ---
+// Frontend
 
 // Spielzustand
 let state = {
